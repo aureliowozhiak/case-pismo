@@ -1,9 +1,12 @@
 from pyspark.sql import SparkSession
+import os
+from pyspark.sql import SparkSession
 
 
 class Pipeline:
     def __init__(self, environment = "dev"):
         self.environment = environment
+
 
     def get_events(self):
         match self.environment:
@@ -17,8 +20,10 @@ class Pipeline:
                 df = spark.read.json(json_path)
 
                 parquet_path = "/app/events/event.parquet"
-
-                df.write.format("parquet").save(parquet_path)
+                if not os.path.exists(parquet_path):
+                    df.write.parquet(parquet_path)
+                else:
+                    raise FileExistsError("File already exists")
 
             case _:
                 raise ValueError("Invalid environment")                
