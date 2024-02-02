@@ -1,0 +1,10 @@
+version: '3'
+services:
+    spark:
+        image: bitnami/spark:latest
+        ports:
+            - 4040:4040
+        volumes:
+            - ./app:/app:rw
+        command: >
+            bash -c "pip install -r /app/requirements.txt && spark-submit --master local[*] /app/main.py"
