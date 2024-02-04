@@ -5,25 +5,68 @@ import pandas as pd
 import json
 import time
 import os
+import argparse
 
-payload_generator = PayloadGenerator()
+class EventProcessor:
+    def __init__(self):
+        """
+        Initializes the EventProcessor class.
+        """
+        self.payload_generator = PayloadGenerator()
 
-os.makedirs("/app/events/json/", exist_ok=True)
+    def generate_events(self, number_of_events):
+        """
+        Generates events with payloads and saves them as JSON files.
 
-for i in range(1):
-    event_id, event_timestamp, payload = payload_generator.generate_payload()
-    os.makedirs(f"/app/events/json/{event_timestamp}", exist_ok=True)
+        Args:
+            number_of_events (int): Number of events to generate.
 
-    with open(f"/app/events/json/{event_timestamp}/{event_id}.json", "w") as file:
-        file.write(str(json.dumps(payload, indent=4)))
-    
+        Returns:
+            None
+        """
+        # Create the JSON folder if it doesn't exist
+        os.makedirs("/app/events/json/", exist_ok=True)
 
-    
-    event_id, event_timestamp, payload = payload_generator.duplicate_payload(event_id, event_timestamp)
-    os.makedirs(f"/app/events/json/{event_timestamp}", exist_ok=True)
+        for i in range(number_of_events):
+            # Generate payload for an event
+            event_id, event_timestamp, payload = self.payload_generator.generate_payload()
+            os.makedirs(f"/app/events/json/{event_id}", exist_ok=True)
 
-    with open(f"/app/events/json/{event_timestamp}/{event_id}.json", "w") as file:
-        file.write(str(json.dumps(payload, indent=4)))
+            # Save the payload as a JSON file
+            with open(f"/app/events/json/{event_id}/{event_timestamp}.json", "w") as file:
+                file.write(str(json.dumps(payload, indent=4)))
 
-pipeline = Pipeline("dev")
-pipeline.process_events()
+            # Duplicate the payload for another event
+            event_id, event_timestamp, payload = self.payload_generator.duplicate_payload(event_id, event_timestamp)
+
+            # Save the duplicated payload as a JSON file
+            with open(f"/app/events/json/{event_id}/{event_timestamp}.json", "w") as file:
+                file.write(str(json.dumps(payload, indent=4)))
+
+    def process_events(self):
+        """
+        Processes the events and saves them as Parquet files.
+
+        Returns:
+            None
+        """
+        pipeline = Pipeline()
+        pipeline.process_events()
+
+
+
+if __name__ == "__main__":
+    # Parse command line arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-n', '--arg1', type=int, help='Number of events to generate', default=0, required=False, dest='arg1')
+    args = parser.parse_args()
+    number_of_events = args.arg1
+
+    # Create an instance of EventProcessor
+    event_processor = EventProcessor()
+
+    # Generate events
+    event_processor.generate_events(number_of_events)
+
+    # Process events
+    event_processor.process_events()
