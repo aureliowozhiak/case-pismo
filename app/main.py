@@ -25,33 +25,33 @@ class EventProcessor:
             None
         """
         # Create the JSON folder if it doesn't exist
-        os.makedirs("/app/events/json/", exist_ok=True)
+        os.makedirs("/app/events/raw_json/", exist_ok=True)
 
         for i in range(number_of_events):
             # Generate payload for an event
             event_id, event_timestamp, payload = self.payload_generator.generate_payload()
-            os.makedirs(f"/app/events/json/{event_id}", exist_ok=True)
+            os.makedirs(f"/app/events/raw_json/{event_id}", exist_ok=True)
 
             # Save the payload as a JSON file
-            with open(f"/app/events/json/{event_id}/{event_timestamp}.json", "w") as file:
+            with open(f"/app/events/raw_json/{event_id}/{event_timestamp}.json", "w") as file:
                 file.write(str(json.dumps(payload, indent=4)))
 
             # Duplicate the payload for another event
             event_id, event_timestamp, payload = self.payload_generator.duplicate_payload(event_id, event_timestamp)
 
             # Save the duplicated payload as a JSON file
-            with open(f"/app/events/json/{event_id}/{event_timestamp}.json", "w") as file:
+            with open(f"/app/events/raw_json/{event_id}/{event_timestamp}.json", "w") as file:
                 file.write(str(json.dumps(payload, indent=4)))
 
-    def process_events(self):
+    def process(self, environment):
         """
         Processes the events and saves them as Parquet files.
 
         Returns:
             None
         """
-        pipeline = Pipeline()
-        pipeline.process_events()
+        pipeline = Pipeline(environment)
+        pipeline.process()
 
 
 
@@ -69,4 +69,4 @@ if __name__ == "__main__":
     event_processor.generate_events(number_of_events)
 
     # Process events
-    event_processor.process_events()
+    event_processor.process("local")

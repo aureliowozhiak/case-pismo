@@ -4,6 +4,5 @@ services:
         image: python:latest
         volumes:
             - ./app:/app:rw
-            - ./app/events/parquet/*:/app/events/parquet/*:rw
         command: >
             bash -c "pip install -r /app/requirements.txt && python /app/main.py -n 10"
