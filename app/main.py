@@ -25,6 +25,7 @@ class EventProcessor:
             None
         """
         # Create the JSON folder if it doesn't exist
+        os.makedirs("/app/events/", exist_ok=True)
         os.makedirs("/app/events/raw_json/", exist_ok=True)
 
         for i in range(number_of_events):
@@ -50,7 +51,7 @@ class EventProcessor:
         Returns:
             None
         """
-        pipeline = Pipeline(environment)
+        pipeline = Pipeline(environment=environment)
         pipeline.process()
 
 

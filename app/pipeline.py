@@ -5,13 +5,13 @@ import time
 from datetime import datetime
 
 class Pipeline:
-    def __init__(self, environment="local"):
+    def __init__(self, folder_path = "/app/events/", environment="local"):
         """
         Initializes a Pipeline object.
 
         The folder_path attribute is set to "/app/events/" by default.
         """
-        self.folder_path = "/app/events/"
+        self.folder_path = folder_path 
         self.environment = environment
 
     def get_events(self, file_path: str):
@@ -132,6 +132,7 @@ class Pipeline:
                 self.process_events()
                 self.move_and_aggregate()
             case "production":
-                pass
+                self.process_events()
+                self.move_and_aggregate()
             case _:
                 print("Invalid environment")

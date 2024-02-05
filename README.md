@@ -84,7 +84,7 @@ The `Pipeline` class is designed to process and aggregate JSON data, converting 
 #### `process(self) -> None`
 - Main processing method based on the specified environment.
   - In "local" environment, it processes events and moves/aggregates Parquet files.
-  - In "production" environment, it does nothing.
+  - In "production" environment, it processes events and moves/aggregates Parquet file.
   - Prints an error message for an invalid environment.
 
 ### Example Usage:

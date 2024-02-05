@@ -5,4 +5,4 @@ services:
         volumes:
             - ./app:/app:rw
         command: >
-            bash -c "pip install -r /app/requirements.txt && python /app/main.py -n 10"
+            bash -c "pip install -r /app/requirements.txt && pytest /app/test_pipeline.py"
