@@ -2,6 +2,7 @@ import os
 import json
 import pandas as pd
 import time
+import boto3
 
 class Pipeline:
     def __init__(self):
@@ -27,6 +28,26 @@ class Pipeline:
         
         return pd.json_normalize(json.loads(json_data))
 
+    def get_events_from_s3(self, bucket: str, key: str):
+        """
+        Reads a JSON file from an S3 bucket and returns its contents as a normalized pandas DataFrame.
+
+        Args:
+            bucket (str): The name of the S3 bucket.
+            key (str): The key of the JSON file in the S3 bucket.
+
+        Returns:
+            pd.DataFrame: The normalized DataFrame containing the JSON data.
+        """
+        try:
+            s3 = boto3.client("s3")
+            obj = s3.get_object(Bucket=bucket, Key=key)
+            json_data = obj["Body"].read().decode("utf-8")
+            return pd.json_normalize(json.loads(json_data))
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
+
     def save_parquet(self, df: pd.DataFrame, file_name: str):
         """
         Saves a pandas DataFrame as a Parquet file.
@@ -49,6 +70,21 @@ class Pipeline:
             os.makedirs(path, exist_ok=True)
 
         df.to_parquet(f"{self.folder_path}parquet/{domain}/{event_type}/{event_id}/{file_name}.parquet", engine="pyarrow")
+    
+    def save_parquet_to_s3(self, df: pd.DataFrame, bucket: str, key: str):
+        """
+        Saves a pandas DataFrame as a Parquet file to an S3 bucket.
+
+        Args:
+            df (pd.DataFrame): The DataFrame to be saved.
+            bucket (str): The name of the S3 bucket.
+            key (str): The key of the Parquet file in the S3 bucket.
+        """
+        try:
+            df.to_parquet(f"s3://{bucket}/{key}", engine="pyarrow")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
 
     def process_event(self, folder: str):
         """
@@ -64,6 +100,23 @@ class Pipeline:
                 df = self.get_events(f"{self.folder_path}json/{folder}/{file}")
                 self.save_parquet(df, file.split(".")[0])
 
+    def process_events_from_s3(self, bucket: str, prefix: str):
+        """
+        Processes all JSON files in a specific S3 bucket and prefix.
+
+        For each JSON file, it reads the contents, converts them to a DataFrame, and saves it as a Parquet file.
+
+        Args:
+            bucket (str): The name of the S3 bucket.
+            prefix (str): The prefix of the JSON files in the S3 bucket.
+        """
+        s3 = boto3.resource("s3")
+        my_bucket = s3.Bucket(bucket)
+        for obj in my_bucket.objects.filter(Prefix=prefix):
+            if obj.key.endswith(".json"):
+                df = self.get_events_from_s3(bucket, obj.key)
+                self.save_parquet(df, obj.key.split("/")[-1].split(".")[0])
+
     def process_events(self):
         """
         Processes all JSON files in the "json" folder.
@@ -73,4 +126,21 @@ class Pipeline:
         for folder in os.listdir(f"{self.folder_path}json/"):
             if os.path.isdir(f"{self.folder_path}json/{folder}"):
                 self.process_event(folder)
+
+    def process_events_from_s3(self, bucket: str, prefix: str):
+        """
+        Processes all JSON files in a specific S3 bucket and prefix.
+
+        For each JSON file, it reads the contents, converts them to a DataFrame, and saves it as a Parquet file.
+
+        Args:
+            bucket (str): The name of the S3 bucket.
+            prefix (str): The prefix of the JSON files in the S3 bucket.
+        """
+        s3 = boto3.resource("s3")
+        my_bucket = s3.Bucket(bucket)
+        for obj in my_bucket.objects.filter(Prefix=prefix):
+            if obj.key.endswith(".json"):
+                df = self.get_events_from_s3(bucket, obj.key)
+                self.save_parquet(df, obj.key.split("/")[-1].split(".")[0])
                 
