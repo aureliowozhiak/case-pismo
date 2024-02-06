@@ -4,13 +4,22 @@ import os
 from pipeline import Pipeline
 
 class TestPipeline:
+    """
+    This class contains unit tests for the Pipeline class.
+    """
+
     @pytest.fixture
     def setup_test_environment(self):
+        """
+        Set up the test environment by creating necessary directories and files.
+        """
+
         os.makedirs("/app/events", exist_ok=True)
         os.makedirs("/app/events/test", exist_ok=True)
         os.makedirs("/app/events/test/raw_json", exist_ok=True)
+        os.makedirs("/app/events/test/raw_json/0acae195-47c0-4a48-b008-f9aed5e9551f", exist_ok=True)
 
-        with open("/app/events/test/raw_json/0acae195-47c0-4a48-b008-f9aed5e9551f.json", "w") as file:
+        with open("/app/events/test/raw_json/0acae195-47c0-4a48-b008-f9aed5e9551f/2020_01_03.json", "w") as file:
             file.write(f"""{{
                 "event_id": "0acae195-47c0-4a48-b008-f9aed5e9551f",
                 "timestamp": "2020_01_03",
@@ -25,8 +34,12 @@ class TestPipeline:
             }}""")
 
     def test_get_events_from_json_file(self, setup_test_environment):
-        pipeline = Pipeline()
-        file_path = "/app/events/test/raw_json/0acae195-47c0-4a48-b008-f9aed5e9551f.json"
+        """
+        Test the get_events method of the Pipeline class by reading events from a JSON file.
+        """
+
+        pipeline = Pipeline(folder_path="/app/events/test/")
+        file_path = "/app/events/test/raw_json/0acae195-47c0-4a48-b008-f9aed5e9551f/2020_01_03.json"
         df = pipeline.get_events(file_path)
 
         assert df.shape == (1, 8)
@@ -39,10 +52,50 @@ class TestPipeline:
         assert df["data.new_status"].values[0] == "INACTIVE"
         assert df["data.reason"].values[0] == "Argue major produce public nor few step drop."
 
-    def test_save_staging_parquet_with_empty_folder(self, setup_test_environment):
-        pipeline = Pipeline()
-        df = pipeline.get_events("/app/events/test/raw_json/0acae195-47c0-4a48-b008-f9aed5e9551f.json")
+
+    def test_save_staging_parquet(self, setup_test_environment):
+        """
+        Test the save_staging_parquet method of the Pipeline class by saving DataFrame as a Parquet file.
+        """
+
+        pipeline = Pipeline(folder_path="/app/events/test/")
+        file_path = "/app/events/test/raw_json/0acae195-47c0-4a48-b008-f9aed5e9551f/2020_01_03.json"
+        df = pipeline.get_events(file_path)
         file_name = "2020_01_03"
         pipeline.save_staging_parquet(df, file_name)
 
-        assert os.path.exists("/app/events/staging_parquet/transaction/status-change/0acae195-47c0-4a48-b008-f9aed5e9551f/2020_01_03.parquet")
+        assert os.path.exists("/app/events/test/staging_parquet/transaction/status-change/0acae195-47c0-4a48-b008-f9aed5e9551f/2020_01_03.parquet")
+        
+    def test_process_event(self, setup_test_environment):
+        """
+        Test the process_event method of the Pipeline class by processing a single event folder.
+        """
+
+        os.remove("/app/events/test/staging_parquet/transaction/status-change/0acae195-47c0-4a48-b008-f9aed5e9551f/2020_01_03.parquet")
+        pipeline = Pipeline(folder_path="/app/events/test/")
+        folder = "0acae195-47c0-4a48-b008-f9aed5e9551f"
+        pipeline.process_event(folder)
+
+        assert os.path.exists("/app/events/test/staging_parquet/transaction/status-change/0acae195-47c0-4a48-b008-f9aed5e9551f/2020_01_03.parquet")
+
+    def test_process_events(self, setup_test_environment):
+        """
+        Test the process_events method of the Pipeline class by processing all event folders.
+        """
+
+        os.remove("/app/events/test/staging_parquet/transaction/status-change/0acae195-47c0-4a48-b008-f9aed5e9551f/2020_01_03.parquet")
+        pipeline = Pipeline(folder_path="/app/events/test/")
+        pipeline.process_events()
+
+        assert os.path.exists("/app/events/test/staging_parquet/transaction/status-change/0acae195-47c0-4a48-b008-f9aed5e9551f/2020_01_03.parquet")
+
+    def test_copy_and_aggregate_staging_parquet(self, setup_test_environment):
+        """
+        Test the copy_and_aggregate method of the Pipeline class by copying and aggregating staging Parquet files.
+        """
+
+        pipeline = Pipeline(folder_path="/app/events/test/")
+        pipeline.copy_and_aggregate()
+
+        assert os.path.exists("/app/events/test/aggregated_parquet/2020/01/03/transaction_status-change/0acae195-47c0-4a48-b008-f9aed5e9551f.parquet")
+      

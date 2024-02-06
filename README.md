@@ -3,6 +3,14 @@
 
 This project is a pipeline for processing JSON files and saving them as Parquet files. It provides methods for reading JSON files from a local directory, converting them to pandas DataFrames, and saving them as Parquet files. The pipeline can be run locally or in cloud with docker.
 
+## Summary
+
+This is the summary of the README.md document:
+
+1. [Getting Started](#getting-started)
+2. [Technical Usage](#technical-usage)
+3. [Technical Documentation of Tests in the TestPipeline Class](#technical-documentation-of-tests-in-the-testpipeline-class)
+
 ## Getting Started
 
 To get started with this project, follow these steps:
@@ -15,7 +23,26 @@ To get started with this project, follow these steps:
 
 The `docker compose up` command is used to start the Docker containers defined in the `docker-compose.yml` file. In this project, it starts a container named `etl` using the `python:latest` image. 
 
-The container is configured with two volumes: one for the application code (`./app:/app:rw`). The command `bash -c "pip install -r /app/requirements.txt && python /app/main.py -n 10"` is executed inside the container. This command installs the required dependencies and runs the `main.py` script with the `-n 10` argument, which is responsible for creating 10 example payloads.
+The container is configured with two volumes: one for the application code (`./app:/app:rw`). The command `bash -c "pip install -r /app/requirements.txt && rm -rf /app/events/* && python /app/main.py -n 10"` is executed inside the container. This command installs the required dependencies and runs the `main.py` script with the `-n 10` argument, which is responsible for creating 10 example payloads.
+
+#### To test the code
+
+If you want to test the code, you can change the `docker-compose.yml` 
+
+*line 8* from:
+
+```yaml
+command: bash -c "pip install -r /app/requirements.txt && rm -rf /app/events/* && python /app/main.py -n 10"
+```
+
+to:
+
+```yaml
+command: bash -c "pip install -r /app/requirements.txt && rm -rf /app/events/* && pytest /app/test_pipeline.py"
+```
+
+After making this change, execute `docker-compose up` again.
+
 
 ⚠️ Make sure you have Docker installed and running on your machine before running the `docker compose up` command.
 
@@ -97,3 +124,71 @@ pipeline.process()
 ```
 
 This documentation provides a comprehensive overview of the `Pipeline` class, its constructor, and methods, aiding users in understanding and effectively utilizing the functionality it offers for processing and aggregating JSON data.
+
+## Technical Documentation of Tests in the TestPipeline Class
+
+This part of the document describes the automated tests being executed in the `TestPipeline` class. These tests were developed to verify the proper functioning of methods in the `Pipeline` class under different scenarios.
+
+### Context
+The `Pipeline` class is responsible for processing events, reading them from JSON files, saving them in Parquet format, and performing copy and aggregation operations. The automated tests were developed using the `pytest` testing framework.
+
+#### Test 1: `test_get_events_from_json_file`
+This test verifies whether the `get_events` method of the `Pipeline` class can correctly read a JSON file of events and convert its content into a pandas DataFrame.
+
+##### Setup
+The test environment is set up by creating necessary directories and files to simulate the folder and file structure where events are stored.
+
+##### Test
+The `get_events` method is called with the path of the JSON file created during setup. The resulting data is checked to ensure it matches the expected values.
+
+##### Asserts
+- Verifies if the resulting DataFrame has the correct shape.
+- Verifies if the values of columns in the DataFrame match the expected values.
+
+#### Test 2: `test_save_staging_parquet`
+This test verifies whether the `save_staging_parquet` method of the `Pipeline` class can save a DataFrame as a Parquet file in the correct location.
+
+##### Setup
+The test environment is set up in the same way as the previous test.
+
+##### Test
+The `save_staging_parquet` method is called with the DataFrame obtained during the previous test and a file name. After execution, it is checked whether the Parquet file was correctly saved in the expected location.
+
+##### Asserts
+- Verifies if the Parquet file was correctly created at the specified location.
+
+#### Test 3: `test_process_event`
+This test verifies whether the `process_event` method of the `Pipeline` class can correctly process a single event.
+
+##### Setup
+The test environment is set up in the same way as the previous tests. Additionally, the Parquet file resulting from the previous test is removed to simulate a fresh processing of the event.
+
+##### Test
+The `process_event` method is called with the name of the folder containing the event to be processed. After execution, it is checked whether the resulting Parquet file was created in the expected location.
+
+##### Asserts
+- Verifies if the Parquet file was correctly created at the specified location.
+
+#### Test 4: `test_process_events`
+This test verifies whether the `process_events` method of the `Pipeline` class can correctly process all events present in the directory.
+
+##### Setup
+The test environment is set up in the same way as the previous tests. Additionally, the Parquet file resulting from the previous test is removed to simulate fresh processing of events.
+
+##### Test
+The `process_events` method is called to process all events present in the directory. After execution, it is checked whether the resulting Parquet file was created in the expected location.
+
+##### Asserts
+- Verifies if the Parquet file was correctly created at the specified location.
+
+#### Test 5: `test_copy_and_aggregate_staging_parquet`
+This test verifies whether the `copy_and_aggregate` method of the `Pipeline` class can copy and aggregate staging Parquet files.
+
+##### Test
+The `copy_and_aggregate` method is called to copy and aggregate staging Parquet files. After execution, it is checked whether the aggregated Parquet file was created in the expected location.
+
+##### Asserts
+- Verifies if the aggregated Parquet file was correctly created at the specified location.
+
+#### Conclusion
+The automated tests implemented in the `TestPipeline` class provide comprehensive coverage of the functionalities of the `Pipeline` class. They ensure that the methods of the class function correctly in a variety of scenarios, helping to maintain code integrity and reliability.

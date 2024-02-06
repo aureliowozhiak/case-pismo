@@ -95,14 +95,19 @@ class Pipeline:
             if os.path.isdir(f"{self.folder_path}raw_json/{folder}"):
                 self.process_event(folder)
 
-    def move_and_aggregate(self):
+    def copy_and_aggregate(self):
         """
-        Moves the Parquet files from the "staging_parquet" folder to the "aggregated_parquet" folder.
+        Copy the Parquet files from the "staging_parquet" folder to the "aggregated_parquet" folder.
         
         It also aggregates the Parquet files by date and event type.
         
         """
         for root, dirs, files in os.walk(f"{self.folder_path}staging_parquet/"):
+            
+            full_root = root
+            # For test purposes, remove the "test/" prefix from the root path
+            root = root.replace("test/", "")
+
             for file in files:
                 if file.endswith(".parquet"):
                     domain = root.split("/")[4]
@@ -121,18 +126,17 @@ class Pipeline:
                         path += f"{folder}/"
                         os.makedirs(path, exist_ok=True)
 
-                    df = pd.read_parquet(f"{root}/{file}")
-                    df.to_parquet(f"{self.folder_path}aggregated_parquet/{date}/{domain_event_type}/{event_id}.parquet", engine="pyarrow")
-                    os.remove(f"{root}/{file}")
+                    os.system(f"cp {full_root}/{file} {self.folder_path}aggregated_parquet/{date}/{domain_event_type}/{event_id}.parquet")
+
 
 
     def process(self):
         match self.environment:
             case "local":
                 self.process_events()
-                self.move_and_aggregate()
+                self.copy_and_aggregate()
             case "production":
                 self.process_events()
-                self.move_and_aggregate()
+                self.copy_and_aggregate()
             case _:
                 print("Invalid environment")
