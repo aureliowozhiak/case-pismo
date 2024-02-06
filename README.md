@@ -17,6 +17,9 @@ To get started with this project, follow these steps:
 1. Clone the repository: `git clone https://github.com/aureliowozhiak/case-pismo.git`
 2. Run `docker compose up`
 
+You can see the example video showing how to run docker compose after having cloned the repository:
+
+[/doc/run_docker.mp4](/doc/run_docker.mp4)
 
 ### Explanation of Docker Compose
 
