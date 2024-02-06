@@ -1,7 +1,6 @@
-# Case Pismo
-## Transforming json event payload data into parquet
+# Case Pismo:  Transforming json event payload data into parquet
 
-This project is a pipeline for processing JSON files and saving them as Parquet files. It provides methods for reading JSON files from a local directory, converting them to pandas DataFrames, and saving them as Parquet files. The pipeline can be run locally or in cloud with docker.
+This project is a pipeline for processing JSON files and saving them as Parquet files. It provides methods for reading JSON files from a local directory, converting them to pandas DataFrames, and saving them as Parquet files. The pipeline can be run locally or in the cloud with docker.
 
 ## Summary
 

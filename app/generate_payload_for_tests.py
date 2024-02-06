@@ -26,7 +26,7 @@ class PayloadGenerator:
         self.new_status = self.fake.random_element(elements=tuple([status for status in self.elements_status if status != old_status]))
         
         event_id = self.fake.uuid4()
-        event_timestamp = self.fake.date_time_this_decade().strftime("%Y_%m_%d")
+        event_timestamp = self.fake.date_time_this_year().strftime("%Y_%m_%d")
 
         self.payload = {
             "event_id": event_id,
